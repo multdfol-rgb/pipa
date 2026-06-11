@@ -492,35 +492,42 @@ function withdrawBonus() {
 }
 
 // ── COPY REF ──────────────────────────────────────────────────────────────────
+// ── COPY REF ──────────────────────────────────────────────────────────────────
 function copyRef() {
-  if (!tgUser) {
-    toast('err', 'Откройте через Telegram');
-    return;
-  }
-  var link = 'https://t.me/' + BOT_NAME + '?start=' + tgUser.id;
+    if (!tgUser) {
+        toast('err', 'Откройте через Telegram');
+        return;
+    }
+    var link = 'https://t.me/' + BOT_NAME + '?start=' + tgUser.id;
 
-  function onCopied() { toast('ok', 'Ссылка скопирована!'); }
+    function onSuccess() { toast('ok', 'Ссылка скопирована!'); }
 
-  function showLink() { window.prompt('Скопируйте ссылку:', link); }
+    function openShare() {
+        // Открывает нативный диалог Telegram — работает всегда
+        var shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link);
+        if (tgApp && tgApp.openTelegramLink) tgApp.openTelegramLink(shareUrl);
+        else window.open(shareUrl, '_blank');
+    }
 
-  function fallback() {
-    var el = document.createElement('textarea');
-    el.value = link;
-    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
-    document.body.appendChild(el);
-    el.focus(); el.select(); el.setSelectionRange(0, 99999);
-    var ok = false;
-    try { ok = document.execCommand('copy'); } catch(e) {}
-    document.body.removeChild(el);
-    if (ok) onCopied(); else showLink();
-  }
+    function tryFallback() {
+        var el = document.createElement('textarea');
+        el.value = link;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+        document.body.appendChild(el);
+        el.focus(); el.select(); el.setSelectionRange(0, 99999);
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(el);
+        if (ok) onSuccess(); else openShare();
+    }
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(link).then(onCopied).catch(fallback);
-  } else {
-    fallback();
-  }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(onSuccess).catch(tryFallback);
+    } else {
+        tryFallback();
+    }
 }
+
 
 
 // ── OPEN MANAGER ──────────────────────────────────────────────────────────────
